@@ -25,8 +25,61 @@ public class RequestBuilderImpl implements RequestBuilder {
 
     @Override
     public RequestBuilder init( final String method, final String url ) {
+        return request( method, url );
+    }
 
+
+    @Override
+    public RequestBuilder request( String method, String url ) {
         this.requestWithBody = Unirest.request( method, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder get( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.GET, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder post( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.POST, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder put( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.PUT, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder patch( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.PATCH, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder delete( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.DELETE, url );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder options( String url ) {
+        this.requestWithBody = Unirest.request( RequestBuilder.OPTIONS, url );
 
         return this;
     }
@@ -145,6 +198,16 @@ public class RequestBuilderImpl implements RequestBuilder {
 
 
     @Override
+    public RequestBuilder plainTextBody( String plainText ) {
+        this.requestBodyEntity = this.requestWithBody.body( plainText );
+
+        this.inContentType( RequestBuilder.PLAIN_TEXT );
+
+        return this;
+    }
+
+
+    @Override
     public RequestBuilder inContentType( final String contentType ) {
         if ( this.multipartBody != null ) {
             this.multipartBody.contentType( contentType );
@@ -210,10 +273,10 @@ public class RequestBuilderImpl implements RequestBuilder {
         this.multipartBody     = null;
 
         if ( response != null ) {
-            return (new ResponseImpl()).supplyString( response );
+            return ( new ResponseImpl() ).supplyString( response );
         }
 
-        return (new ResponseImpl()).supply();
+        return ( new ResponseImpl() ).supply();
     }
 
 
@@ -237,9 +300,9 @@ public class RequestBuilderImpl implements RequestBuilder {
         this.multipartBody     = null;
 
         if ( response != null ) {
-            return (new ResponseImpl()).supplyJson( response );
+            return ( new ResponseImpl() ).supplyJson( response );
         }
 
-        return (new ResponseImpl()).supply();
+        return ( new ResponseImpl() ).supply();
     }
 }

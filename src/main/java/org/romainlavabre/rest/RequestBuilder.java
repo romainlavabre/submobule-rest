@@ -12,6 +12,7 @@ public interface RequestBuilder {
     String JSON             = "application/json";
     String FORM_URL_ENCODED = "application/x-www-form-urlencoded";
     String FORM_DATA        = "multipart/form-data";
+    String PLAIN_TEXT       = "text/plain";
     String GET              = "GET";
     String POST             = "POST";
     String PUT              = "PUT";
@@ -23,7 +24,29 @@ public interface RequestBuilder {
     String RESPONSE_XML     = "XML";
 
 
+    @Deprecated
     RequestBuilder init( String method, String url );
+
+
+    RequestBuilder request( String method, String url );
+
+
+    RequestBuilder get( String url );
+
+
+    RequestBuilder post( String url );
+
+
+    RequestBuilder put( String url );
+
+
+    RequestBuilder patch( String url );
+
+
+    RequestBuilder delete( String url );
+
+
+    RequestBuilder options( String url );
 
 
     RequestBuilder withBasicAuth( String username, String password );
@@ -54,6 +77,9 @@ public interface RequestBuilder {
 
 
     RequestBuilder jsonBody( List< Object > json );
+
+
+    RequestBuilder plainTextBody( String plainText );
 
 
     RequestBuilder inContentType( String contentType );
