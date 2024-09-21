@@ -1,7 +1,7 @@
 package org.romainlavabre.rest;
 
 import com.google.gson.GsonBuilder;
-import kong.unirest.*;
+import kong.unirest.core.*;
 import org.romainlavabre.rest.fix.LocalDateTimeTypeAdapter;
 import org.romainlavabre.rest.fix.ZonedDateTimeTypeAdapter;
 

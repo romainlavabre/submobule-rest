@@ -1,8 +1,8 @@
 package org.romainlavabre.rest;
 
-import kong.unirest.Header;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
+import kong.unirest.core.Header;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.JsonNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -122,7 +122,7 @@ public class ResponseImpl implements Response {
             if ( this.responseJson.getBody() == null ) {
                 return new ArrayList<>();
             }
-            
+
             return this.responseJson.getBody().getArray().toList();
         }
 
