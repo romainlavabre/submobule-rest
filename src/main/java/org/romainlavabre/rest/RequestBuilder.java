@@ -1,6 +1,8 @@
 package org.romainlavabre.rest;
 
 import java.io.File;
+import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,8 @@ public interface RequestBuilder {
     String RESPONSE_JSON    = "JSON";
     String RESPONSE_HTML    = "HTML";
     String RESPONSE_XML     = "XML";
+    String RESPONSE_TEXT    = "TEXT";
+    String RESPONSE_BYTES   = "BYTES";
 
 
     @Deprecated
@@ -82,6 +86,38 @@ public interface RequestBuilder {
     RequestBuilder plainTextBody( String plainText );
 
 
+    /**
+     * A raw body, sent as is.
+     *
+     * @since 3.2.0
+     */
+    default RequestBuilder body( byte[] content, String contentType ) {
+        throw new UnsupportedOperationException( "body( byte[], String ) is not supported by " + getClass().getName() );
+    }
+
+
+    /**
+     * A raw body read while it is sent, never held in memory.
+     *
+     * @since 3.2.0
+     */
+    default RequestBuilder body( InputStream content, String contentType ) {
+        throw new UnsupportedOperationException( "body( InputStream, String ) is not supported by " + getClass().getName() );
+    }
+
+
+    /**
+     * The longest this request may take once sent, its answer included. Overrides for this request only the
+     * request timeout of the global Unirest configuration, which applies when this is not called. The connect
+     * timeout stays the global one.
+     *
+     * @since 3.2.0
+     */
+    default RequestBuilder timeout( Duration timeout ) {
+        throw new UnsupportedOperationException( "timeout( Duration ) is not supported by " + getClass().getName() );
+    }
+
+
     RequestBuilder inContentType( String contentType );
 
 
@@ -92,6 +128,7 @@ public interface RequestBuilder {
 
 
     /**
+     * @param media RESPONSE_JSON, RESPONSE_BYTES, or any other value for the body as a string
      * @return Response in choices media
      */
     Response buildAndSend( String media );

@@ -4,6 +4,9 @@ import kong.unirest.core.Header;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.JsonNode;
 
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.net.http.HttpConnectTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +19,9 @@ public class ResponseImpl implements Response {
 
     protected HttpResponse< JsonNode > responseJson;
     protected HttpResponse< String >   responseString;
+    protected HttpResponse< byte[] >   responseBytes;
+    // Why no answer came; null when the server answered
+    protected Throwable                error;
 
 
     @Override
@@ -26,6 +32,10 @@ public class ResponseImpl implements Response {
 
         if ( this.responseString != null ) {
             return this.responseString.getStatus();
+        }
+
+        if ( this.responseBytes != null ) {
+            return this.responseBytes.getStatus();
         }
 
         return 0;
@@ -44,6 +54,11 @@ public class ResponseImpl implements Response {
                     && this.responseString.getStatus() < 300;
         }
 
+        if ( this.responseBytes != null ) {
+            return this.responseBytes.getStatus() >= 200
+                    && this.responseBytes.getStatus() < 300;
+        }
+
         return false;
     }
 
@@ -58,6 +73,10 @@ public class ResponseImpl implements Response {
             return this.responseString.getHeaders().containsKey( header );
         }
 
+        if ( this.responseBytes != null ) {
+            return this.responseBytes.getHeaders().containsKey( header );
+        }
+
         return false;
     }
 
@@ -70,6 +89,10 @@ public class ResponseImpl implements Response {
 
         if ( this.responseString != null ) {
             return this.responseString.getHeaders().get( header ).get( 0 );
+        }
+
+        if ( this.responseBytes != null ) {
+            return this.responseBytes.getHeaders().get( header ).get( 0 );
         }
 
         return null;
@@ -92,6 +115,16 @@ public class ResponseImpl implements Response {
             final Map< String, String > headers = new HashMap<>();
 
             for ( final Header header : this.responseString.getHeaders().all() ) {
+                headers.put( header.getName(), header.getValue() );
+            }
+
+            return headers;
+        }
+
+        if ( responseBytes != null ) {
+            final Map< String, String > headers = new HashMap<>();
+
+            for ( final Header header : this.responseBytes.getHeaders().all() ) {
                 headers.put( header.getName(), header.getValue() );
             }
 
@@ -137,6 +170,55 @@ public class ResponseImpl implements Response {
         }
 
         return "";
+    }
+
+
+    @Override
+    public byte[] getBodyAsBytes() {
+        if ( this.responseBytes != null && this.responseBytes.getBody() != null ) {
+            return this.responseBytes.getBody();
+        }
+
+        return new byte[ 0 ];
+    }
+
+
+    @Override
+    public Throwable getError() {
+        return this.error;
+    }
+
+
+    @Override
+    public boolean isUnreachable() {
+        for ( Throwable cause = this.error; cause != null; cause = cause.getCause() ) {
+            if ( cause instanceof ConnectException
+                    || cause instanceof HttpConnectTimeoutException
+                    || cause instanceof UnknownHostException ) {
+                return true;
+            }
+
+            if ( cause.getCause() == cause ) {
+                break;
+            }
+        }
+
+        return false;
+    }
+
+
+    protected Response supplyBytes( final HttpResponse< byte[] > response ) {
+        this.responseBytes = response;
+
+        return this;
+    }
+
+
+    protected Response supplyError( final Throwable error ) {
+        this.responseJson = null;
+        this.error        = error;
+
+        return this;
     }
 
 

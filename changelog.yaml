@@ -1,3 +1,4 @@
+3.2.0: ADD per request timeout overriding the global one, raw and streamed bodies, bytes responses, Response.getError() and isUnreachable(). Additive: a network failure still answers status 0
 3.1.0: Update Unirest version
 3.0.0: FIX CVE
 2.1.0: ADD Plain text request

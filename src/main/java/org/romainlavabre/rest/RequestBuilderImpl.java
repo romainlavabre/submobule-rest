@@ -6,6 +6,8 @@ import org.romainlavabre.rest.fix.LocalDateTimeTypeAdapter;
 import org.romainlavabre.rest.fix.ZonedDateTimeTypeAdapter;
 
 import java.io.File;
+import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -21,6 +23,8 @@ public class RequestBuilderImpl implements RequestBuilder {
     protected HttpRequestWithBody requestWithBody;
     protected RequestBodyEntity   requestBodyEntity;
     protected MultipartBody       multipartBody;
+    // Null: the request timeout of the global Unirest configuration
+    protected Duration            timeout;
 
 
     @Override
@@ -208,6 +212,34 @@ public class RequestBuilderImpl implements RequestBuilder {
 
 
     @Override
+    public RequestBuilder body( final byte[] content, final String contentType ) {
+        this.requestBodyEntity = this.requestWithBody.body( content );
+
+        this.inContentType( contentType );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder body( final InputStream content, final String contentType ) {
+        this.requestBodyEntity = this.requestWithBody.body( content );
+
+        this.inContentType( contentType );
+
+        return this;
+    }
+
+
+    @Override
+    public RequestBuilder timeout( final Duration timeout ) {
+        this.timeout = timeout;
+
+        return this;
+    }
+
+
+    @Override
     public RequestBuilder inContentType( final String contentType ) {
         if ( this.multipartBody != null ) {
             this.multipartBody.contentType( contentType );
@@ -255,54 +287,96 @@ public class RequestBuilderImpl implements RequestBuilder {
             return buildAndSend();
         }
 
-        HttpResponse< String > response = null;
-
-        try {
-            if ( this.multipartBody != null ) {
-                response = this.multipartBody.asString();
-            } else if ( this.requestBodyEntity != null ) {
-                response = this.requestBodyEntity.asString();
-            } else {
-                response = this.requestWithBody.asString();
-            }
-        } catch ( final Throwable ignored ) {
+        if ( responseMedia.equals( RESPONSE_BYTES ) ) {
+            return buildAndSendForBytes();
         }
 
-        this.requestWithBody   = null;
-        this.requestBodyEntity = null;
-        this.multipartBody     = null;
+        HttpResponse< String > response = null;
+        Throwable              error    = null;
+
+        try {
+            response = toSend().asString();
+        } catch ( final Throwable throwable ) {
+            error = throwable;
+        }
+
+        reset();
 
         if ( response != null ) {
             return ( new ResponseImpl() ).supplyString( response );
         }
 
-        return ( new ResponseImpl() ).supply();
+        return ( new ResponseImpl() ).supplyError( error );
     }
 
 
     @Override
     public Response buildAndSend() {
         HttpResponse< JsonNode > response = null;
+        Throwable                error    = null;
 
         try {
-            if ( this.multipartBody != null ) {
-                response = this.multipartBody.asJson();
-            } else if ( this.requestBodyEntity != null ) {
-                response = this.requestBodyEntity.asJson();
-            } else {
-                response = this.requestWithBody.asJson();
-            }
-        } catch ( final Throwable ignored ) {
+            response = toSend().asJson();
+        } catch ( final Throwable throwable ) {
+            error = throwable;
         }
 
-        this.requestWithBody   = null;
-        this.requestBodyEntity = null;
-        this.multipartBody     = null;
+        reset();
 
         if ( response != null ) {
             return ( new ResponseImpl() ).supplyJson( response );
         }
 
-        return ( new ResponseImpl() ).supply();
+        return ( new ResponseImpl() ).supplyError( error );
+    }
+
+
+    protected Response buildAndSendForBytes() {
+        HttpResponse< byte[] > response = null;
+        Throwable              error    = null;
+
+        try {
+            response = toSend().asBytes();
+        } catch ( final Throwable throwable ) {
+            error = throwable;
+        }
+
+        reset();
+
+        if ( response != null ) {
+            return ( new ResponseImpl() ).supplyBytes( response );
+        }
+
+        return ( new ResponseImpl() ).supplyError( error );
+    }
+
+
+    /**
+     * The last form the request took, with the timeout of this request if one was given.
+     */
+    protected HttpRequest< ? > toSend() {
+        HttpRequest< ? > request;
+
+        if ( this.multipartBody != null ) {
+            request = this.multipartBody;
+        } else if ( this.requestBodyEntity != null ) {
+            request = this.requestBodyEntity;
+        } else {
+            request = this.requestWithBody;
+        }
+
+        if ( this.timeout != null ) {
+            request.requestTimeout( ( int ) Math.min( Integer.MAX_VALUE, this.timeout.toMillis() ) );
+        }
+
+        return request;
+    }
+
+
+    protected void reset() {
+        this.requestWithBody   = null;
+        this.requestBodyEntity = null;
+        this.multipartBody     = null;
+        this.timeout           = null;
     }
 }

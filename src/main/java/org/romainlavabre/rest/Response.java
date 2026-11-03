@@ -30,4 +30,33 @@ public interface Response {
 
 
     List< Object > getBodyAsList();
+
+
+    /**
+     * @return the body of a request sent with RESPONSE_BYTES, else an empty array
+     * @since 3.2.0
+     */
+    default byte[] getBodyAsBytes() {
+        return new byte[ 0 ];
+    }
+
+
+    /**
+     * @return why no answer came (connection refused, timeout, unknown host…), null when the server answered.
+     * {@link #status()} is then 0
+     * @since 3.2.0
+     */
+    default Throwable getError() {
+        return null;
+    }
+
+
+    /**
+     * @return true when the connection was never established (refused, connect timeout, unknown host): nothing was
+     * sent, so the request can be replayed without risk of a second effect
+     * @since 3.2.0
+     */
+    default boolean isUnreachable() {
+        return false;
+    }
 }
